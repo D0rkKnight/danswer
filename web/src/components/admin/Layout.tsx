@@ -231,6 +231,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   ),
                   link: "/admin/connectors/document360",
                 },
+                {
+                  name: (
+                    <div className="flex">
+                      <Document360Icon size={16} />
+                      <div className="ml-1">Canvas</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/canvas",
+                },
               ],
             },
             {

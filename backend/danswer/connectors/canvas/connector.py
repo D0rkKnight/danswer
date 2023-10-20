@@ -6,7 +6,7 @@ from typing import Any
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.bookstack.client import BookStackApiClient
+from danswer.connectors.canvas.client import CanvasClient
 from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -17,167 +17,67 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 
 
-class BookstackConnector(LoadConnector, PollConnector):
+class CanvasConnector(LoadConnector):
     def __init__(
         self,
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.batch_size = batch_size
-        self.bookstack_client: BookStackApiClient | None = None
+        self.canvas_client: CanvasClient | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        self.bookstack_client = BookStackApiClient(
-            base_url=credentials["bookstack_base_url"],
-            token_id=credentials["bookstack_api_token_id"],
-            token_secret=credentials["bookstack_api_token_secret"],
+        self.canvas_client = CanvasClient(
+            base_url=credentials["canvas_base_url"],
+            api_key=credentials["canvas_api_key"],
         )
         return None
 
-    @staticmethod
-    def _get_doc_batch(
-        batch_size: int,
-        bookstack_client: BookStackApiClient,
-        endpoint: str,
-        transformer: Callable[[BookStackApiClient, dict], Document],
-        start_ind: int,
-        start: SecondsSinceUnixEpoch | None = None,
-        end: SecondsSinceUnixEpoch | None = None,
-    ) -> tuple[list[Document], int]:
-        doc_batch: list[Document] = []
-
-        params = {
-            "count": str(batch_size),
-            "offset": str(start_ind),
-            "sort": "+id",
-        }
-
-        if start:
-            params["filter[updated_at:gte]"] = datetime.utcfromtimestamp(
-                start
-            ).strftime("%Y-%m-%d %H:%M:%S")
-
-        if end:
-            params["filter[updated_at:lte]"] = datetime.utcfromtimestamp(end).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
-
-        batch = bookstack_client.get(endpoint, params=params).get("data", [])
-        for item in batch:
-            doc_batch.append(transformer(bookstack_client, item))
-
-        return doc_batch, len(batch)
-
-    @staticmethod
-    def _book_to_document(
-        bookstack_client: BookStackApiClient, book: dict[str, Any]
-    ) -> Document:
-        url = bookstack_client.build_app_url("/books/" + str(book.get("slug")))
-        text = book.get("name", "") + "\n" + book.get("description", "")
-        return Document(
-            id="book:" + str(book.get("id")),
-            sections=[Section(link=url, text=text)],
-            source=DocumentSource.BOOKSTACK,
-            semantic_identifier="Book: " + str(book.get("name")),
-            metadata={"type": "book", "updated_at": str(book.get("updated_at"))},
-        )
-
-    @staticmethod
-    def _chapter_to_document(
-        bookstack_client: BookStackApiClient, chapter: dict[str, Any]
-    ) -> Document:
-        url = bookstack_client.build_app_url(
-            "/books/"
-            + str(chapter.get("book_slug"))
-            + "/chapter/"
-            + str(chapter.get("slug"))
-        )
-        text = chapter.get("name", "") + "\n" + chapter.get("description", "")
-        return Document(
-            id="chapter:" + str(chapter.get("id")),
-            sections=[Section(link=url, text=text)],
-            source=DocumentSource.BOOKSTACK,
-            semantic_identifier="Chapter: " + str(chapter.get("name")),
-            metadata={"type": "chapter", "updated_at": str(chapter.get("updated_at"))},
-        )
-
-    @staticmethod
-    def _shelf_to_document(
-        bookstack_client: BookStackApiClient, shelf: dict[str, Any]
-    ) -> Document:
-        url = bookstack_client.build_app_url("/shelves/" + str(shelf.get("slug")))
-        text = shelf.get("name", "") + "\n" + shelf.get("description", "")
-        return Document(
-            id="shelf:" + str(shelf.get("id")),
-            sections=[Section(link=url, text=text)],
-            source=DocumentSource.BOOKSTACK,
-            semantic_identifier="Shelf: " + str(shelf.get("name")),
-            metadata={"type": "shelf", "updated_at": shelf.get("updated_at")},
-        )
-
-    @staticmethod
-    def _page_to_document(
-        bookstack_client: BookStackApiClient, page: dict[str, Any]
-    ) -> Document:
-        page_id = str(page.get("id"))
-        page_name = str(page.get("name"))
-        page_data = bookstack_client.get("/pages/" + page_id, {})
-        url = bookstack_client.build_app_url(
-            "/books/"
-            + str(page.get("book_slug"))
-            + "/page/"
-            + str(page_data.get("slug"))
-        )
-        page_html = (
-            "<h1>" + html.escape(page_name) + "</h1>" + str(page_data.get("html"))
-        )
-        text = parse_html_page_basic(page_html)
-        time.sleep(0.1)
-        return Document(
-            id="page:" + page_id,
-            sections=[Section(link=url, text=text)],
-            source=DocumentSource.BOOKSTACK,
-            semantic_identifier="Page: " + str(page_name),
-            metadata={"type": "page", "updated_at": page_data.get("updated_at")},
-        )
-
     def load_from_state(self) -> GenerateDocumentsOutput:
-        if self.bookstack_client is None:
-            raise ConnectorMissingCredentialError("Bookstack")
+        if self.canvas_client is None:
+            raise ConnectorMissingCredentialError("Canvas")
 
-        return self.poll_source(None, None)
-
-    def poll_source(
-        self, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None
-    ) -> GenerateDocumentsOutput:
-        if self.bookstack_client is None:
-            raise ConnectorMissingCredentialError("Bookstack")
-
-        transform_by_endpoint: dict[
-            str, Callable[[BookStackApiClient, dict], Document]
-        ] = {
-            "/books": self._book_to_document,
-            "/chapters": self._chapter_to_document,
-            "/shelves": self._shelf_to_document,
-            "/pages": self._page_to_document,
-        }
-
-        for endpoint, transform in transform_by_endpoint.items():
-            start_ind = 0
-            while True:
-                doc_batch, num_results = self._get_doc_batch(
-                    batch_size=self.batch_size,
-                    bookstack_client=self.bookstack_client,
-                    endpoint=endpoint,
-                    transformer=transform,
-                    start_ind=start_ind,
-                    start=start,
-                    end=end,
-                )
-                start_ind += num_results
-                if doc_batch:
-                    yield doc_batch
-
-                if num_results < self.batch_size:
-                    break
-                else:
-                    time.sleep(0.2)
+        files = self.canvas_client.get_course_files(48859)
+        
+        # Format into document
+        docs = []
+        
+        i = 0
+        
+        for f in files:
+            d = Document(
+                id=f.id,
+                sections=[f.url, f.get_contents()],
+                source=DocumentSource.CANVAS,
+                semantic_identifier=f.display_name,
+                metadata={},
+            )
+            docs.append(d)
+            
+            i += 1
+            if i == self.batch_size:
+                yield docs
+                docs = []
+                i = 0
+                
+                time.sleep(0.2)
+                
+        # Yield last batch
+        if i > 0:
+            yield docs
+        
+if __name__ == "__main__":
+    import time
+    test_connector = CanvasConnector()
+    test_connector.load_credentials({
+        "canvas_base_url": "https://canvas.ucsd.edu",
+        "canvas_api_key": "13171~uLfLwfSt9eIkNFaXnkCrxRvExJx0gfWHJLIFmwOQYYtd0nMEJQEUxNB72ozT3XY8"
+    })
+    all_docs = test_connector.load_from_state()
+    
+    for batch in all_docs:
+        for doc in batch:
+            print(doc)
+    
+    # current = time.time()
+    # one_day_ago = current - 24 * 60 * 60  # 1 day
+    # latest_docs = test_connector.poll_source(one_day_ago, current)
