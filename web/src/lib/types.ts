@@ -25,7 +25,8 @@ export type ValidSources =
   | "hubspot"
   | "document360"
   | "file"
-  | "google_sites";
+  | "google_sites"
+  | "canvas";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -78,7 +79,7 @@ export interface GoogleDriveConfig {
   follow_shortcuts?: boolean;
 }
 
-export interface BookstackConfig {}
+export interface BookstackConfig { }
 
 export interface ConfluenceConfig {
   wiki_page_url: string;
@@ -88,7 +89,7 @@ export interface JiraConfig {
   jira_project_url: string;
 }
 
-export interface ProductboardConfig {}
+export interface ProductboardConfig { }
 
 export interface SlackConfig {
   workspace: string;
@@ -99,7 +100,7 @@ export interface SlabConfig {
   base_url: string;
 }
 
-export interface GuruConfig {}
+export interface GuruConfig { }
 
 export interface GongConfig {
   workspaces?: string[];
@@ -114,9 +115,9 @@ export interface ZulipConfig {
   realm_url: string;
 }
 
-export interface NotionConfig {}
+export interface NotionConfig { }
 
-export interface HubSpotConfig {}
+export interface HubSpotConfig { }
 
 export interface Document360Config {
   workspace: string;
@@ -127,6 +128,8 @@ export interface GoogleSitesConfig {
   zip_path: string;
   base_url: string;
 }
+
+export interface CanvasConfig { }
 
 export interface IndexAttemptSnapshot {
   status: ValidStatuses | null;
@@ -238,6 +241,11 @@ export interface HubSpotCredentialJson {
 export interface Document360CredentialJson {
   portal_id: string;
   document360_api_token: string;
+}
+
+export interface CanvasCredentialJson {
+  canvas_base_url: string;
+  canvas_api_key: string;
 }
 
 // DELETION

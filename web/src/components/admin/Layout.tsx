@@ -26,6 +26,7 @@ import {
   GoogleSitesIcon,
   GongIcon,
   ZoomInIcon,
+  CanvasIcon
 } from "@/components/icons/icons";
 import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
@@ -234,7 +235,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                 {
                   name: (
                     <div className="flex">
-                      <Document360Icon size={16} />
+                      <CanvasIcon size={16} />
                       <div className="ml-1">Canvas</div>
                     </div>
                   ),

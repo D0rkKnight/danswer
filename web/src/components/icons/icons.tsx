@@ -480,3 +480,17 @@ export const GoogleSitesIcon = ({
     </div>
   );
 };
+
+export const CanvasIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={document360Icon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};

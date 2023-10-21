@@ -18,6 +18,7 @@ import {
   HubSpotIcon,
   Document360Icon,
   GoogleSitesIcon,
+  CanvasIcon
 } from "./icons/icons";
 
 interface SourceMetadata {
@@ -135,6 +136,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: GoogleSitesIcon,
         displayName: "Google Sites",
         adminPageLink: "/admin/connectors/google-sites",
+      };
+    case "canvas":
+      return {
+        icon: CanvasIcon,
+        displayName: "Canvas",
+        adminPageLink: "/admin/connectors/canvas",
       };
     default:
       throw new Error("Invalid source type");

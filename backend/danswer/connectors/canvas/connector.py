@@ -1,5 +1,6 @@
 import html
 import time
+import os
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any
@@ -69,8 +70,8 @@ if __name__ == "__main__":
     import time
     test_connector = CanvasConnector()
     test_connector.load_credentials({
-        "canvas_base_url": "https://canvas.ucsd.edu",
-        "canvas_api_key": "13171~uLfLwfSt9eIkNFaXnkCrxRvExJx0gfWHJLIFmwOQYYtd0nMEJQEUxNB72ozT3XY8"
+        "canvas_base_url": os.getenv("CANVAS_BASE_URL"),
+        "canvas_api_key": os.getenv("CANVAS_API_KEY")
     })
     all_docs = test_connector.load_from_state()
     

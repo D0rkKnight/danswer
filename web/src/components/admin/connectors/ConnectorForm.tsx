@@ -24,6 +24,8 @@ export async function submitConnector<T>(
 
   let isSuccess = false;
   try {
+    console.log(BASE_CONNECTOR_URL + (isUpdate ? `/${connectorId}` : ""))
+
     const response = await fetch(
       BASE_CONNECTOR_URL + (isUpdate ? `/${connectorId}` : ""),
       {
@@ -113,7 +115,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
           const connectorConfig = Object.fromEntries(
             Object.keys(initialValues).map((key) => [key, values[key]])
           ) as T;
-
+          
           // best effort check to see if existing connector exists
           // delete it if:
           //   1. it exists
@@ -141,11 +143,21 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             disabled: false,
           });
 
+          console.log(message, isSuccess, response)
+          console.log("Connector name: "+connectorName)
+          console.log("Source: "+source)
+          console.log("Input type: "+inputType)
+          console.log("Connector config: "+JSON.stringify(connectorConfig))
+          console.log("Refresh freq: "+refreshFreq)
+          console.log("Disabled: "+false)
+
           if (!isSuccess || !response) {
             setPopup({ message, type: "error" });
             formikHelpers.setSubmitting(false);
             return;
           }
+
+          console.log("Point B")
 
           if (credentialId !== undefined) {
             const ccPairName = ccPairNameBuilder

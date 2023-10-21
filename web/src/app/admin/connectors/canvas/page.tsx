@@ -1,13 +1,13 @@
 "use client";
 
 import * as Yup from "yup";
-import { BookstackIcon, TrashIcon } from "@/components/icons/icons";
+import { BookstackIcon, CanvasIcon, TrashIcon } from "@/components/icons/icons";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
-  BookstackCredentialJson,
-  BookstackConfig,
+  CanvasCredentialJson,
+  CanvasConfig,
   ConnectorIndexingStatus,
   Credential,
 } from "@/lib/types";
@@ -54,16 +54,16 @@ const Main = () => {
     return <div>Failed to load credentials</div>;
   }
 
-  const bookstackConnectorIndexingStatuses: ConnectorIndexingStatus<
-    BookstackConfig,
-    BookstackCredentialJson
+  const canvasConnectorIndexingStatuses: ConnectorIndexingStatus<
+    CanvasConfig,
+    CanvasCredentialJson
   >[] = connectorIndexingStatuses.filter(
     (connectorIndexingStatus) =>
-      connectorIndexingStatus.connector.source === "bookstack"
+      connectorIndexingStatus.connector.source === "canvas"
   );
-  const bookstackCredential: Credential<BookstackCredentialJson> | undefined =
+  const canvasCredential: Credential<CanvasCredentialJson> | undefined =
     credentialsData.find(
-      (credential) => credential.credential_json?.bookstack_api_token_id
+      (credential) => credential.credential_json?.canvas_api_key
     );
 
   return (
@@ -73,17 +73,17 @@ const Main = () => {
         Step 1: Provide your API details
       </h2>
 
-      {bookstackCredential ? (
+      {canvasCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            <p className="my-auto">Existing API Token: </p>
+            <p className="my-auto">Existing API Key: </p>
             <p className="ml-1 italic my-auto max-w-md">
-              {bookstackCredential.credential_json?.bookstack_api_token_id}
+              {canvasCredential.credential_json?.canvas_api_key}
             </p>
             <button
               className="ml-1 hover:bg-gray-700 rounded-full p-1"
               onClick={async () => {
-                if (bookstackConnectorIndexingStatuses.length > 0) {
+                if (canvasConnectorIndexingStatuses.length > 0) {
                   setPopup({
                     type: "error",
                     message:
@@ -91,7 +91,7 @@ const Main = () => {
                   });
                   return;
                 }
-                await adminDeleteCredential(bookstackCredential.id);
+                await adminDeleteCredential(canvasCredential.id);
                 refreshCredentials();
               }}
             >
@@ -102,47 +102,36 @@ const Main = () => {
       ) : (
         <>
           <p className="text-sm">
-            To get started you&apos;ll need API token details for your BookStack
+            To get started you&apos;ll need API token details for your Canvas
             instance. You can get these by editing your (or another) user
-            account in BookStack and creating a token via the &apos;API
-            Tokens&apos; section at the bottom. Your user account will require
-            to be assigned a BookStack role which has the &apos;Access system
-            API&apos; system permission assigned.
+            account in Canvas and creating a token via the &apos;API
+            Tokens&apos; section in your user settings.
           </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2 mb-4">
-            <CredentialForm<BookstackCredentialJson>
+            <CredentialForm<CanvasCredentialJson>
               formBody={
                 <>
                   <TextFormField
-                    name="bookstack_base_url"
+                    name="canvas_base_url"
                     label="Instance Base URL:"
                   />
                   <TextFormField
-                    name="bookstack_api_token_id"
-                    label="API Token ID:"
-                  />
-                  <TextFormField
-                    name="bookstack_api_token_secret"
-                    label="API Token Secret:"
-                    type="password"
+                    name="canvas_api_key"
+                    label="API Key:"
                   />
                 </>
               }
               validationSchema={Yup.object().shape({
-                bookstack_base_url: Yup.string().required(
-                  "Please enter the base URL for your BookStack instance"
+                canvas_base_url: Yup.string().required(
+                  "Please enter the base URL for your Canvas instance"
                 ),
-                bookstack_api_token_id: Yup.string().required(
-                  "Please enter your BookStack API token ID"
-                ),
-                bookstack_api_token_secret: Yup.string().required(
-                  "Please enter your BookStack API token secret"
+                canvas_api_key: Yup.string().required(
+                  "Please enter your Canvas API token ID"
                 ),
               })}
               initialValues={{
-                bookstack_base_url: "",
-                bookstack_api_token_id: "",
-                bookstack_api_token_secret: "",
+                canvas_base_url: "",
+                canvas_api_key: "",
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
@@ -155,29 +144,28 @@ const Main = () => {
         </>
       )}
 
-      {bookstackConnectorIndexingStatuses.length > 0 && (
+      {canvasConnectorIndexingStatuses.length > 0 && (
         <>
           <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-            BookStack indexing status
+            Canvas indexing status
           </h2>
           <p className="text-sm mb-2">
-            The latest page, chapter, book and shelf changes are fetched every
-            10 minutes.
+            The Canvas files are fetched every 10 minutes
           </p>
           <div className="mb-2">
-            <ConnectorsTable<BookstackConfig, BookstackCredentialJson>
-              connectorIndexingStatuses={bookstackConnectorIndexingStatuses}
-              liveCredential={bookstackCredential}
+            <ConnectorsTable<CanvasConfig, CanvasCredentialJson>
+              connectorIndexingStatuses={canvasConnectorIndexingStatuses}
+              liveCredential={canvasCredential}
               getCredential={(credential) => {
                 return (
                   <div>
-                    <p>{credential.credential_json.bookstack_api_token_id}</p>
+                    <p>{credential.credential_json.canvas_api_key}</p>
                   </div>
                 );
               }}
               onCredentialLink={async (connectorId) => {
-                if (bookstackCredential) {
-                  await linkCredential(connectorId, bookstackCredential.id);
+                if (canvasCredential) {
+                  await linkCredential(connectorId, canvasCredential.id);
                   mutate("/api/manage/admin/connector/indexing-status");
                 }
               }}
@@ -189,31 +177,31 @@ const Main = () => {
         </>
       )}
 
-      {bookstackCredential &&
-        bookstackConnectorIndexingStatuses.length === 0 && (
+      {canvasCredential &&
+        canvasConnectorIndexingStatuses.length === 0 && (
           <>
             <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
               <h2 className="font-bold mb-3">Create Connection</h2>
               <p className="text-sm mb-4">
-                Press connect below to start the connection to your BookStack
+                Press connect below to start the connection to your Canvas
                 instance.
               </p>
-              <ConnectorForm<BookstackConfig>
-                nameBuilder={(values) => `BookStackConnector`}
-                ccPairNameBuilder={(values) => `BookStackConnector`}
-                source="bookstack"
-                inputType="poll"
+              <ConnectorForm<CanvasConfig>
+                nameBuilder={(values) => `CanvasConnector`}
+                ccPairNameBuilder={(values) => `CanvasConnector`}
+                source="canvas"
+                inputType="load_state"
                 formBody={<></>}
                 validationSchema={Yup.object().shape({})}
                 initialValues={{}}
                 refreshFreq={10 * 60} // 10 minutes
-                credentialId={bookstackCredential.id}
+                credentialId={canvasCredential.id}
               />
             </div>
           </>
         )}
 
-      {!bookstackCredential && (
+      {!canvasCredential && (
         <>
           <p className="text-sm mb-4">
             Please provide your API details in Step 1 first! Once done with
@@ -233,8 +221,8 @@ export default function Page() {
         <HealthCheckBanner />
       </div>
       <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <BookstackIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">BookStack</h1>
+        <CanvasIcon size={32} />
+        <h1 className="text-3xl font-bold pl-2">Canvas</h1>
       </div>
       <Main />
     </div>

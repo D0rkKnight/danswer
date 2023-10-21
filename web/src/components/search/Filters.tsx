@@ -25,6 +25,7 @@ const sources: Source[] = [
   { displayName: "HubSpot", internalName: "hubspot" },
   { displayName: "Document360", internalName: "document360" },
   { displayName: "Google Sites", internalName: "google_sites" },
+  { displayName: "Canvas", internalName: "canvas" },
 ];
 
 interface SourceSelectorProps {
