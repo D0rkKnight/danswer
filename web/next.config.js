@@ -1,3 +1,5 @@
+// ip = socket.gethostbyname(socket.gethostname())
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
@@ -23,12 +25,12 @@ const nextConfig = {
     return [
       {
         source: "/api/stream-direct-qa:params*",
-        destination: "http://127.0.0.1:8080/stream-direct-qa:params*", // Proxy to Backend
+        destination: "http://danswer-api.ultimate-theater.duckdns.org/stream-direct-qa:params*", // Proxy to Backend
         permanent: true,
       },
       {
         source: "/api/stream-query-validation:params*",
-        destination: "http://127.0.0.1:8080/stream-query-validation:params*", // Proxy to Backend
+        destination: "http://danswer-api.ultimate-theater.duckdns.org/stream-query-validation:params*", // Proxy to Backend
         permanent: true,
       },
     ];

@@ -1,60 +1,9 @@
 from typing import Any
 
 import requests
+import io
+import pypdf
 from canvasapi import Canvas
-
-
-# class BookStackClientRequestFailedError(ConnectionError):
-#     def __init__(self, status: int, error: str) -> None:
-#         super().__init__(
-#             "BookStack Client request failed with status {status}: {error}".format(
-#                 status=status, error=error
-#             )
-#         )
-
-
-# class BookStackApiClient:
-#     def __init__(
-#         self,
-#         base_url: str,
-#         token_id: str,
-#         token_secret: str,
-#     ) -> None:
-#         self.base_url = base_url
-#         self.token_id = token_id
-#         self.token_secret = token_secret
-
-#     def get(self, endpoint: str, params: dict[str, str]) -> dict[str, Any]:
-#         url: str = self._build_url(endpoint)
-#         headers = self._build_headers()
-#         response = requests.get(url, headers=headers, params=params)
-
-#         try:
-#             json = response.json()
-#         except Exception:
-#             json = {}
-
-#         if response.status_code >= 300:
-#             error = response.reason
-#             response_error = json.get("error", {}).get("message", "")
-#             if response_error:
-#                 error = response_error
-#             raise BookStackClientRequestFailedError(response.status_code, error)
-
-#         return json
-
-#     def _build_headers(self) -> dict[str, str]:
-#         auth = "Token " + self.token_id + ":" + self.token_secret
-#         return {
-#             "Authorization": auth,
-#             "Accept": "application/json",
-#         }
-
-#     def _build_url(self, endpoint: str) -> str:
-#         return self.base_url.rstrip("/") + "/api/" + endpoint.lstrip("/")
-
-#     def build_app_url(self, endpoint: str) -> str:
-#         return self.base_url.rstrip("/") + "/" + endpoint.lstrip("/")
 
 class CanvasClient:
     
@@ -77,3 +26,29 @@ class CanvasClient:
                 out.append(f)
         
         return out
+    
+    def parse_file_contents(self, file):
+        if file.display_name[-4:] == ".pdf":
+            return self.parse_pdf(file)
+        
+        if file.display_name[-4:] == ".txt":
+            return self.parse_txt(file)
+        
+        exception = Exception("File type not supported")
+        raise exception
+    
+    
+    def parse_pdf(self, file):
+        raw = file.get_contents(binary=True)
+        pdf_bytes = io.BytesIO(raw)
+        
+        reader = pypdf.PdfReader(pdf_bytes)
+        text = ""
+        
+        for page in reader.pages:
+            text += page.extract_text()
+            
+        return text
+    
+    def parse_txt(self, file):
+        return file.get_contents()

@@ -82,7 +82,7 @@ def _indexing_pipeline(
             index_attempt_metadata=index_attempt_metadata,
             db_session=db_session,
         )
-
+        
         chunks: list[DocAwareChunk] = list(
             chain(*[chunker.chunk(document=document) for document in documents])
         )

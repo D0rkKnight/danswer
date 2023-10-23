@@ -16,6 +16,7 @@ from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.utils.logger import setup_logger
 
 
 class CanvasConnector(LoadConnector):
@@ -46,8 +47,9 @@ class CanvasConnector(LoadConnector):
         
         for f in files:
             d = Document(
-                id=f.id,
-                sections=[f.url, f.get_contents()],
+                id=f.url, # ues url rather than id, I don't think Postgres likes the number format
+                # sections=[Section(link=f.url, text=f.get_contents())],
+                sections=[Section(link=f.url, text=self.canvas_client.parse_file_contents(f))],
                 source=DocumentSource.CANVAS,
                 semantic_identifier=f.display_name,
                 metadata={},
@@ -65,7 +67,7 @@ class CanvasConnector(LoadConnector):
         # Yield last batch
         if i > 0:
             yield docs
-        
+            
 if __name__ == "__main__":
     import time
     test_connector = CanvasConnector()
@@ -79,6 +81,7 @@ if __name__ == "__main__":
         for doc in batch:
             print(doc)
     
+    print("done")
     # current = time.time()
     # one_day_ago = current - 24 * 60 * 60  # 1 day
     # latest_docs = test_connector.poll_source(one_day_ago, current)
