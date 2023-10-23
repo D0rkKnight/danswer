@@ -7,7 +7,7 @@ from typing import Any
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.canvas.client import CanvasClient
+from danswer.connectors.canvas.client import CanvasClient, FileTooLargeError
 from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -46,23 +46,26 @@ class CanvasConnector(LoadConnector):
         i = 0
         
         for f in files:
-            d = Document(
-                id=f.url, # ues url rather than id, I don't think Postgres likes the number format
-                # sections=[Section(link=f.url, text=f.get_contents())],
-                sections=[Section(link=f.url, text=self.canvas_client.parse_file_contents(f))],
-                source=DocumentSource.CANVAS,
-                semantic_identifier=f.display_name,
-                metadata={},
-            )
-            docs.append(d)
-            
-            i += 1
-            if i == self.batch_size:
-                yield docs
-                docs = []
-                i = 0
+            try:
+                d = Document(
+                    id=f.url, # ues url rather than id, I don't think Postgres likes the number format
+                    # sections=[Section(link=f.url, text=f.get_contents())],
+                    sections=[Section(link=f.url, text=self.canvas_client.parse_file_contents(f))],
+                    source=DocumentSource.CANVAS,
+                    semantic_identifier=f.display_name,
+                    metadata={},
+                )
+                docs.append(d)
                 
-                time.sleep(0.2)
+                i += 1
+                if i == self.batch_size:
+                    yield docs
+                    docs = []
+                    i = 0
+                    
+                    time.sleep(0.2)
+            except FileTooLargeError as e:
+                print(e)
                 
         # Yield last batch
         if i > 0:

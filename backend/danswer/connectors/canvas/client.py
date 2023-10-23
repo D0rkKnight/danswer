@@ -5,6 +5,12 @@ import io
 import pypdf
 from canvasapi import Canvas
 
+FILE_SIZE_LIMIT = 5000000
+
+class FileTooLargeError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+
 class CanvasClient:
     
     def __init__(
@@ -28,6 +34,12 @@ class CanvasClient:
         return out
     
     def parse_file_contents(self, file):
+        
+        # if file.size > 10mb:
+        if file.size > FILE_SIZE_LIMIT:
+            exception = FileTooLargeError("File too large: " + file.display_name + " (" + str(file.size) + ")")
+            raise exception
+        
         if file.display_name[-4:] == ".pdf":
             return self.parse_pdf(file)
         
